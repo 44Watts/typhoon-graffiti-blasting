@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Typhoon Sand Blaster — Graffiti Edition (v5)</title>
+<style>
+  :root { --orange:#f97316; --white:#fff; --black:#0a0a0a; }
+  html,body{height:100%;margin:0;background:#000;color:var(--white);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+  .wrap{display:grid;grid-template-rows:auto 1fr auto;min-height:100%}
+  header{position:sticky;top:0;z-index:20;background:#0d0d0d;border-bottom:1px solid rgba(255,255,255,.08)}
+  .bar{display:flex;gap:12px;align-items:center;padding:10px 14px;flex-wrap:wrap}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.3px}
+  .logo img{width:28px;height:28px}
+  .hud{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap}
+  .chip{display:flex;align-items:center;gap:8px;padding:6px 10px;background:#111;border:1px solid rgba(255,255,255,.08);border-radius:10px;font-size:14px}
+  .meter{width:140px;height:12px;border-radius:999px;background:#0b0b0b;border:1px solid rgba(255,255,255,.08);overflow:hidden}
+  .meter span{display:block;height:100%;width:0;background:linear-gradient(90deg,#fff,#ddd)}
+  .btn{appearance:none;border:none;border-radius:12px;background:linear-gradient(180deg,#f97316,#e64810);color:#fff;font-weight:900;padding:8px 12px;cursor:pointer;box-shadow:0 6px 18px rgba(249,115,22,.35)}
+  .btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+  .btn.secondary{background:linear-gradient(180deg,#1f1f1f,#0f0f0f);border:1px solid #2a2a2a}
+  main{display:grid;place-items:center;padding:12px;background:radial-gradient(1400px 800px at 50% -40%, #1b1b1b, #0a0a0a)}
+  #game{width:min(1150px,96vw);aspect-ratio:16/9;background:#0a0a0a;border-radius:16px;overflow:hidden;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.55)}
+  canvas{width:100%;height:100%;display:block;touch-action:none;background:#0a0a0a}
+  .overlay{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.75));z-index:15}
+  .card{background:rgba(8,8,8,.9);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px;max-width:min(860px,92%)}
+  .card h2{margin:0 0 8px}
+  .kbd{background:#121212;border:1px solid rgba(255,255,255,.12);padding:2px 6px;border-radius:6px;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+  .powerBanner{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:#0d0d0d;border:2px solid var(--orange);padding:8px 12px;border-radius:12px;font-weight:900;letter-spacing:.4px;z-index:12;display:none}
+  .pulse{animation:pulse 1.2s ease-in-out infinite} @keyframes pulse{0%{filter:none}50%{filter:drop-shadow(0 0 26px rgba(249,115,22,.55))}100%{filter:none}}
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .ba canvas{width:100%;height:auto;border-radius:10px;border:1px solid #222;background:#000}
+  .stars{display:flex;gap:6px;margin-top:8px;font-size:22px}
+  footer{padding:10px 14px;color:#c9c9c9;font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="bar">
+      <div class="logo">
+        <img alt="Typhoon logo" src="data:image/png;base64,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"/>
+        <div>Typhoon Sand Blaster <span style="color:#eaeaea;font-weight:700">— Graffiti Blasting</span></div>
+      </div>
+      <div class="hud">
+        <div class="chip">Time: <strong id="time">90</strong>s</div>
+        <div class="chip">Clean: <strong id="cleanPct">0%</strong></div>
+        <div class="chip">Nozzle<div class="meter" style="width:110px"><span id="nozzleFill"></span></div></div>
+        <div class="chip">Power<div class="meter" style="width:110px"><span id="powerFill"></span></div></div>
+        <button id="revealBtn" class="btn secondary">Reveal Leftovers (R)</button>
+        <button id="blastBtn" class="btn" disabled>Typhoon Blast</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="game">
+      <div id="powerBanner" class="powerBanner">TYPHOON BLAST READY — Press SPACE or tap the button</div>
+      <canvas id="c" width="1280" height="720"></canvas>
+
+      <div id="start" class="overlay">
+        <div class="card">
+          <h2>Blast paint like a pro.</h2>
+          <p>Mouse/touch to aim, <span class="kbd">Hold</span> to sand-blast. Scroll or <span class="kbd">[ / ]</span> to adjust nozzle width.</p>
+          <p>Fill the <strong>Power</strong> meter. When full, hit <span class="kbd">Space</span> / <strong>Typhoon Blast</strong> to widen your spray.</p>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button id="startBtn" class="btn">Start</button>
+            <button id="muteBtn" class="btn" style="background:linear-gradient(180deg,#ffffff,#e9e9e9);color:#111">Mute: Off</button>
+          </div>
+          <div class="tapHint" id="tapHint" style="margin-top:8px;color:#bbb">You can also click anywhere on the dark overlay to begin.</div>
+        </div>
+      </div>
+
+      <div id="done" class="overlay" style="display:none">
+        <div class="card">
+          <h2>Good job!</h2>
+          <p>You cleaned <strong id="finalPct">100%</strong> of the wall. Time left: <strong id="finalTime">0</strong>s.</p>
+          <div class="stars" id="stars"></div>
+          <div class="ba">
+            <canvas id="beforeC" width="600" height="340"></canvas>
+            <canvas id="afterC" width="600" height="340"></canvas>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
+            <button id="againBtn" class="btn">Play Again</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>Typhoon Blaster | The Only Airless Portable Sandblaster</footer>
+</div>
+
+<script>
+(function(){
+  function $(id){return document.getElementById(id);}
+
+  // Elements
+  const cvs=$('c'), ctx=cvs.getContext('2d');
+  const timeEl=$('time'), cleanPctEl=$('cleanPct'), nozzleFill=$('nozzleFill'), powerFill=$('powerFill');
+  const start=$('start'), startBtn=$('startBtn'), muteBtn=$('muteBtn');
+  const done=$('done'), againBtn=$('againBtn'), starsEl=$('stars');
+  const beforeC=$('beforeC'), afterC=$('afterC');
+  const revealBtn=$('revealBtn'), blastBtn=$('blastBtn'), powerBanner=$('powerBanner');
+
+  // Audio placeholders
+  const SFX={spray:new Audio(), blast:new Audio()};
+  SFX.spray.src="data:audio/wav;base64,UklGRmQOAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABYAAAACAAACWAAAAGxtb2MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+  SFX.blast.src="data:audio/wav;base64,UklGRiQJAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABYAAAACAAACWAAAAExJSUkUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+  let muted=false; function play(a){ if(!muted){ try{a.currentTime=0;a.play()}catch{} } }
+
+  // Offscreen layers
+  const wall=document.createElement('canvas'); wall.width=cvs.width; wall.height=cvs.height; const wtx=wall.getContext('2d');
+  const dirt=document.createElement('canvas'); dirt.width=cvs.width; dirt.height=Math.floor(cvs.height*0.78); const dtx=dirt.getContext('2d');
+  const hint=document.createElement('canvas'); hint.width=dirt.width; hint.height=dirt.height; const htx=hint.getContext('2d');
+
+  // State
+  let running=false;
+  let pointer={x:cvs.width*0.5,y:cvs.height*0.45,down:false};
+  let hoseX=cvs.width*0.5, hoseY=cvs.height*0.90;
+  let nozzle=40, minNozzle=14, maxNozzle=120;
+  let power=0, blastActive=0, cleanedRatio=0, screenShake=0;
+  let reveal=false;
+  let beforeImageData=null;
+  let baseTime=90, timeLeft=baseTime;
+
+  // Wall
+  function buildWall(){
+    const bw=96, bh=36, rows=Math.ceil(dirt.height/bh)+2, cols=Math.ceil(cvs.width/bw)+2;
+    wtx.fillStyle='#f3f3f3'; wtx.fillRect(0,0,wall.width,dirt.height);
+    for(let r=0;r<rows;r++){
+      const y=r*bh, off=(r%2)? bw/2:0;
+      for(let c=0;c<cols;c++){
+        const x=c*bw-off, light=45+(Math.random()*8-4);
+        wtx.fillStyle=`hsl(18, 80%, ${light}%)`;
+        wtx.fillRect(x+2,y+2,bw-4,bh-4);
+        wtx.globalAlpha=0.12; wtx.strokeStyle='rgba(0,0,0,.8)'; wtx.strokeRect(x+2,y+2,bw-4,bh-4); wtx.globalAlpha=1;
+      }
+    }
+    wtx.fillStyle='#0a0a0a'; wtx.fillRect(0,dirt.height,cvs.width,cvs.height-dirt.height);
+  }
+
+  // Spray-paint style graffiti
+  function rnd(a,b){ return a + Math.random()*(b-a); }
+  function sprayStroke(ctx, pts, color, width){
+    ctx.save();
+    // build a path from points
+    ctx.beginPath();
+    for(let i=0;i<pts.length;i++){ const p=pts[i]; (i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); }
+    // soft edge via shadow/blur trick
+    ctx.strokeStyle=color;
+    ctx.lineCap='round'; ctx.lineJoin='round'; ctx.lineWidth=width;
+    ctx.globalAlpha=0.9;
+    ctx.shadowColor=color; ctx.shadowBlur=width*0.6;
+    ctx.stroke();
+    // light overspray
+    ctx.shadowBlur=width*1.2; ctx.globalAlpha=0.25; ctx.stroke();
+    ctx.restore();
+  }
+  function sprayTag(ctx, x, y, scale, palette){
+    const col = palette[(Math.random()*palette.length)|0];
+    const strokes = 2 + (Math.random()*3|0);
+    for(let s=0;s<strokes;s++){
+      const n=4 + (Math.random()*4|0);
+      const pts=[];
+      let px=x, py=y;
+      for(let i=0;i<n;i++){
+        px += rnd(-60,60)*scale;
+        py += rnd(-40,40)*scale;
+        pts.push({x:px, y:py});
+      }
+      sprayStroke(ctx, pts, col, rnd(6,18)*scale);
+    }
+    // occasional circle or zigzag
+    if(Math.random()<0.5){
+      const r=rnd(20,60)*scale;
+      const circPts=[]; for(let i=0;i<10;i++){ const a=(i/9)*Math.PI*2; circPts.push({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r}); }
+      sprayStroke(ctx,circPts,col,rnd(6,14)*scale);
+    }
+  }
+
+function seedGraffiti(){
+  dtx.clearRect(0,0,dirt.width,dirt.height);
+
+  // --- DIRTY BRICK DARKEN + GRIME BASE ---
+  dtx.save();
+
+  // Base dim (subtle) then heavy multiply wash for a clearly darker "dirty" look
+  dtx.globalCompositeOperation = 'source-over';
+  dtx.fillStyle = 'rgba(0,0,0,0.18)';  // subtle dim
+  dtx.fillRect(0, 0, dirt.width, dirt.height);
+
+  dtx.globalCompositeOperation = 'multiply';
+  dtx.fillStyle = 'rgba(80, 40, 20, 0.3)';  // main darkening — bump 0.55 → 0.65 for even darker
+  dtx.fillRect(0, 0, dirt.width, dirt.height);
+
+  // Soft blotches (patchy grime), also in multiply so they deepen darkness
+  for (let i = 0; i < 90; i++) {
+    const x = Math.random() * dirt.width;
+    const y = Math.random() * dirt.height;
+    const r = 80 + Math.random() * 200;
+    const g = dtx.createRadialGradient(x, y, r * 0.15, x, y, r);
+    g.addColorStop(0, 'rgba(80,40,20,0.1)');   // brown blotches
+    g.addColorStop(1, 'rgba(0,0,0,0.00)');
+    dtx.fillStyle = g;
+    dtx.beginPath();
+    dtx.arc(x, y, r, 0, Math.PI * 2);
+    dtx.fill();
+  }
+
+  // Fine speckle (dry dust), still multiply so it actually darkens
+  dtx.globalAlpha = 0.22;
+  for (let i = 0; i < 1600; i++) {
+    const x = Math.random() * dirt.width;
+    const y = Math.random() * dirt.height;
+    const s = Math.random() * 1.8 + 0.2;
+    dtx.fillStyle = Math.random() < 0.5 ? '#4a2e1c' : '#2e2e2e'; // dark brown + gray mix
+
+    dtx.beginPath();
+    dtx.arc(x, y, s, 0, Math.PI * 2);
+    dtx.fill();
+  }
+  dtx.globalAlpha = 1;
+  dtx.restore();
+
+  // --- GRAFFITI TAGS (spray-paint look) ---
+  const palette=['#ffffff','#f97316','#000000','#ff4d6d','#50e3c2','#7aa2ff','#ffd166','#06d6a0','#ef476f'];
+  const tags = 14 + (Math.random()*10|0);
+  for(let i=0;i<tags;i++){
+    const x=rnd(80,dirt.width-80), y=rnd(80,dirt.height-60), sc=rnd(0.6,1.4);
+    sprayTag(dtx, x, y, sc, palette);
+  }
+
+  // --- KEEP GRIME VISIBLE: enforce a minimum alpha floor ---
+  // (Your old pass used brightness to compute alpha, which made dark grime ~transparent.)
+  const id = dtx.getImageData(0,0,dirt.width,dirt.height);
+  for (let i = 0; i < id.data.length; i += 4) {
+    const r = id.data[i], g = id.data[i+1], b = id.data[i+2];
+    const existingA = id.data[i+3];
+    // We want dirt to be *visible* even if RGB is near black:
+    // take the max of existing alpha and a floor; also allow bright paint to push alpha up.
+    const brightness = Math.max(r, g, b);             // 0..255
+    const targetA = Math.max(existingA, brightness, 140); // α >= 140 so grime shows up
+    id.data[i+3] = targetA;
+  }
+  dtx.putImageData(id, 0, 0);
+}
+
+
+  function estimateCleanRatio(){
+    const step=6, id=dtx.getImageData(0,0,dirt.width,dirt.height).data; let dirty=0,total=0;
+    for(let y=0;y<dirt.height;y+=step){ for(let x=0;x<dirt.width;x+=step){ const a=id[((y*dirt.width+x)<<2)+3]; if(a>5) dirty++; total++; } }
+    return 1 - dirty/total;
+  }
+
+  // High-contrast reveal of remaining paint
+  function generateHintOverlay(){
+    htx.clearRect(0,0,hint.width,hint.height);
+    // Dim backdrop using multiply to boost contrast
+    htx.globalCompositeOperation='source-over';
+    htx.fillStyle='rgba(0,0,0,0.35)'; // dim
+    htx.fillRect(0,0,hint.width,hint.height);
+    // Copy remaining paint
+    htx.drawImage(dirt,0,0);
+    // Color it orange
+    htx.globalCompositeOperation='source-in';
+    htx.fillStyle = 'rgba(0,120,255,0.1)';
+    htx.fillRect(0,0,hint.width,hint.height);
+    // Outline/glow: blur a copy to make edges pop
+    const edge = document.createElement('canvas'); edge.width=hint.width; edge.height=hint.height;
+    const ex=edge.getContext('2d');
+    ex.filter='blur(2px)';
+    ex.drawImage(dirt,0,0);
+    ex.globalCompositeOperation='source-in';
+    ex.fillStyle='rgba(0,150,255,0.9)';
+    ex.fillRect(0,0,edge.width,edge.height);
+    htx.globalCompositeOperation='lighter';
+    htx.drawImage(edge,0,0);
+    htx.globalCompositeOperation='source-over';
+  }
+
+  function cleanAt(x,y,dt){
+    const dx=x-hoseX, dy=y-hoseY, dist=Math.hypot(dx,dy), press=Math.max(0,1-(dist/650));
+    const radiusBase=nozzle*(blastActive>0?1.9:1.0), radius=radiusBase*(0.7+0.7*press), strength=0.85*press+0.2;
+    dtx.save(); dtx.globalCompositeOperation='destination-out';
+    const g=dtx.createRadialGradient(x,y,radius*0.35,x,y,radius);
+    g.addColorStop(0,'rgba(0,0,0,'+Math.min(1,strength)+')'); g.addColorStop(1,'rgba(0,0,0,0)');
+    dtx.fillStyle=g; dtx.beginPath(); dtx.arc(x,y,radius,0,Math.PI*2); dtx.fill(); dtx.restore();
+
+    // Sand dust plume (no wet darkening)
+    const ang=Math.atan2(dy,dx), count=18+(blastActive>0?10:0);
+    for(let i=0;i<count;i++){ const t=Math.random(), dd=18+t*(120+nozzle*1.2);
+      const px=x+Math.cos(ang)*dd+(Math.random()-0.5)*10, py=y+Math.sin(ang)*dd+(Math.random()-0.5)*10;
+      const size=1+Math.random()*2.0, palette=['#ffffff','#f97316','#ffe8d0'], col=palette[(Math.random()*palette.length)|0];
+      ctx.fillStyle=col; ctx.globalAlpha=0.85; ctx.beginPath(); ctx.arc(px,py,size,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+    }
+
+    power=Math.min(100, power + (press*dt*22)); play(SFX.spray);
+  }
+
+  function updateHUD(){
+    timeEl.textContent=Math.max(0,Math.ceil(timeLeft));
+    cleanPctEl.textContent=Math.round(cleanedRatio*100)+'%';
+    nozzleFill.style.width=((nozzle-minNozzle)/(maxNozzle-minNozzle)*100).toFixed(0)+'%';
+    powerFill.style.width=power.toFixed(0)+'%';
+    const ready=power>=100; blastBtn.disabled=!ready; powerBanner.style.display=ready?'block':'none'; blastBtn.classList.toggle('pulse', ready);
+  }
+
+  function drawNozzle(){
+    ctx.save();
+    ctx.lineWidth=10; ctx.strokeStyle='#111'; ctx.beginPath();
+    ctx.moveTo(hoseX,hoseY); const mx=pointer.x, my=pointer.y, midX=(hoseX*2+mx)/3, midY=(hoseY*2+my)/3+30;
+    ctx.quadraticCurveTo(midX,midY,mx,my); ctx.stroke();
+    const ang=Math.atan2(my-hoseY, mx-hoseX); ctx.translate(mx,my); ctx.rotate(ang);
+    ctx.fillStyle='#000'; ctx.fillRect(-10,-8,32,16); ctx.fillStyle='#fff'; ctx.fillRect(18,-4,12,8); ctx.fillStyle='#f97316'; ctx.fillRect(-10,-8,6,16);
+    const r=(nozzle*(blastActive>0?1.9:1.0))*0.9; ctx.globalAlpha=0.2; ctx.strokeStyle='#fff'; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke(); ctx.globalAlpha=1;
+    ctx.restore();
+  }
+
+  function render(){
+    const shakeX=screenShake>0?(Math.random()-0.5)*screenShake:0, shakeY=screenShake>0?(Math.random()-0.5)*screenShake:0;
+    ctx.save(); ctx.translate(shakeX,shakeY);
+    ctx.drawImage(wall,0,0);
+    ctx.drawImage(dirt,0,0);
+    if(reveal) ctx.drawImage(hint,0,0);
+    drawNozzle();
+    ctx.restore();
+    if(screenShake>0) screenShake=Math.max(0,screenShake-0.8);
+  }
+
+  function step(dt){
+    timeLeft -= dt;
+    if(timeLeft<=0){ endRound(); return; }
+    if(blastActive>0) blastActive-=dt;
+    if(pointer.down) cleanAt(pointer.x, Math.min(pointer.y, dirt.height-4), dt);
+    cleanedRatio=estimateCleanRatio();
+    if(reveal && (performance.now()%200<16)) generateHintOverlay();
+    updateHUD();
+    if(cleanedRatio>=0.999) endRound();
+  }
+
+  function startRound(){
+    buildWall(); seedGraffiti();
+    beforeImageData=dtx.getImageData(0,0,dirt.width,dirt.height);
+    power=0; blastActive=0; cleanedRatio=0; screenShake=0; reveal=false;
+    timeLeft=baseTime;
+    generateHintOverlay();
+    running=true; start.style.display='none'; done.style.display='none'; updateHUD();
+    try{ SFX.spray.play().then(()=>SFX.spray.pause()).catch(()=>{}); }catch{}
+  }
+
+  function starsFor(pct){
+    if(pct>=90) return 3;
+    if(pct>=80) return 2;
+    if(pct>=70) return 1;
+    return 0;
+  }
+
+  function endRound(){
+    running=false;
+    const pct=Math.round(cleanedRatio*100);
+    const left=Math.max(0,Math.ceil(timeLeft));
+    // BEFORE/AFTER
+    const bw=beforeC.getContext('2d'), aw=afterC.getContext('2d');
+    bw.clearRect(0,0,beforeC.width,beforeC.height); aw.clearRect(0,0,afterC.width,afterC.height);
+    const beforeLayer=document.createElement('canvas'); beforeLayer.width=dirt.width; beforeLayer.height=dirt.height;
+    beforeLayer.getContext('2d').putImageData(beforeImageData,0,0);
+    bw.drawImage(wall,0,0,beforeC.width,beforeC.height);
+    bw.drawImage(beforeLayer,0,0,beforeC.width,beforeC.height);
+    aw.drawImage(wall,0,0,afterC.width,afterC.height);
+    aw.drawImage(dirt,0,0,afterC.width,afterC.height);
+
+    // Stars
+    starsEl.innerHTML='';
+    const s=starsFor(pct);
+    for(let i=0;i<3;i++){ const span=document.createElement('span'); span.textContent=i<s?'★':'☆'; span.style.color=i<s?'#f97316':'#666'; starsEl.appendChild(span); }
+
+    document.getElementById('finalPct').textContent = pct + '%';
+    document.getElementById('finalTime').textContent = left;
+    done.style.display='grid';
+
+    // Twins flourish
+    const startTime=performance.now(), dur=900;
+    (function anim(){
+      const t=Math.min(1,(performance.now()-startTime)/dur);
+      render(); const y=cvs.height+120 - t*240;
+      drawBike(cvs.width*0.35, y); drawBike(cvs.width*0.65, y+12);
+      if(t<1) requestAnimationFrame(anim);
+    })();
+  }
+
+  function drawBike(x,y){
+    ctx.save(); ctx.translate(x,y);
+    ctx.fillStyle='#111'; ctx.beginPath(); ctx.arc(-38,0,18,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(38,0,18,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#f97316'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(-38,0,12,0,Math.PI*2); ctx.stroke(); ctx.beginPath(); ctx.arc(38,0,12,0,Math.PI*2); ctx.stroke();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(-38,0); ctx.lineTo(0,-20); ctx.lineTo(38,0); ctx.stroke();
+    ctx.fillStyle='#f97316'; ctx.fillRect(-6,-26,12,8); ctx.fillStyle='#fff'; ctx.fillRect(-8,-20,16,6);
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(0,-40,10,0,Math.PI*2); ctx.fill(); // head
+    // eyelashes + ponytail
+    ctx.strokeStyle='#000'; ctx.lineWidth=1.5; for(let i=0;i<3;i++){ ctx.beginPath(); ctx.moveTo(-4+i*2,-44); ctx.lineTo(-4+i*2,-47); ctx.stroke(); }
+    ctx.strokeStyle='#000'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(6,-46); ctx.quadraticCurveTo(18,-50,14,-60); ctx.stroke();
+    // thumbs up
+    ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(0,-30); ctx.lineTo(12,-24); ctx.stroke(); ctx.beginPath(); ctx.moveTo(12,-24); ctx.lineTo(16,-30); ctx.stroke();
+    ctx.restore();
+  }
+
+  function toggleReveal(){
+    reveal=!reveal;
+    revealBtn.textContent = reveal ? 'Hide Leftovers (R)' : 'Reveal Leftovers (R)';
+    if(reveal) generateHintOverlay();
+  }
+
+  // Bindings
+  startBtn.addEventListener('click', startRound);
+  start.addEventListener('click', (e)=>{ if(e.target===start) startRound(); });
+  againBtn.addEventListener('click', startRound);
+  muteBtn.addEventListener('click', ()=>{ muted=!muted; muteBtn.textContent='Mute: ' + (muted?'On':'Off'); });
+  revealBtn.addEventListener('click', toggleReveal);
+  document.addEventListener('keydown', (e)=>{ if(e.key.toLowerCase()==='r') toggleReveal(); });
+  blastBtn.addEventListener('click', ()=>{ if(power>=100){ power=0; blastActive=5; screenShake=10; powerBanner.style.display='none'; play(SFX.blast); } });
+
+  // Pointer & keys
+  function setPointer(d){ pointer.down=d; }
+  cvs.addEventListener('pointerdown', ()=>setPointer(true));
+  window.addEventListener('pointerup', ()=>setPointer(false));
+  cvs.addEventListener('pointerleave', ()=>setPointer(false));
+  cvs.addEventListener('pointermove', (e)=>{ const r=cvs.getBoundingClientRect(); pointer.x=(e.clientX-r.left)*(cvs.width/r.width); pointer.y=(e.clientY-r.top)*(cvs.height/r.height); });
+  cvs.addEventListener('wheel', (e)=>{ e.preventDefault(); nozzle=Math.max(minNozzle, Math.min(maxNozzle, nozzle - Math.sign(e.deltaY)*6)); }, {passive:false});
+  document.addEventListener('keydown', (e)=>{ if(e.code==='Space' && power>=100){ power=0; blastActive=5; screenShake=10; powerBanner.style.display='none'; play(SFX.blast);} if(e.key===']') nozzle=Math.min(maxNozzle,nozzle+6); if(e.key==='[') nozzle=Math.max(minNozzle,nozzle-6); });
+
+  // Loop
+  let last=performance.now();
+  (function loop(now){ const dt=Math.min(0.05,(now-last)/1000); last=now; if(running) step(dt); render(); requestAnimationFrame(loop); })(performance.now());
+
+  // Initial static render
+  buildWall(); seedGraffiti(); beforeImageData=dtx.getImageData(0,0,dirt.width,dirt.height);
+})();
+</script>
+</body>
+</html>
